@@ -1,20 +1,19 @@
 import json
 import requests
+import csv
 
-url = 'https://api.foursquare.com/v2/venues/explore'
-
-art_fun = '4d4b7104d754a06370d81259'
-museum = '4bf58dd8d48988d181941735'
-pub = '4bf58dd8d48988d11b941735'
-theatre = '4bf58dd8d48988d137941735'
-musical_festival = '5267e4d9e4b0ec79466e48d1'
-park = '4bf58dd8d48988d163941735'
-monument = '4bf58dd8d48988d12d941735'
-trail = '4bf58dd8d48988d159941735'
-square =  '4bf58dd8d48988d164941735'
-mountain = '4eb1d4d54b900d56c88a45fc'
-
-all_categories = ('4eb1d4d54b900d56c88a45fc,'#mountain
+VENUE_EXPLORE = 'https://api.foursquare.com/v2/venues/explore/'
+CLIENT_ID = 'ALCBWJD2IZ40YSYPYNMZAAKUXGOYCKSZQVRGHWXUXVC0GAFR'
+CLIEND_SECRET = 'NYX4JFVQ4JO1FPR2G2SVQLJORNQOHJGIJ05MIRWPIVX3LN50'
+#?client_id=ALCBWJD2IZ40YSYPYNMZAAKUXGOYCKSZQVRGHWXUXVC0GAFR&client_secret=NYX4JFVQ4JO1FPR2G2SVQLJORNQOHJGIJ05MIRWPIVX3LN50&v=20180323
+VERSION = '20180323'
+NEAR = 'pocos de caldas'
+LIMIT = 900
+venuesId = []
+usersId = []
+users_line = []
+matrix = [['IGNORE']]
+ALL_CATEGORIES = ('4eb1d4d54b900d56c88a45fc,'#mountain
                   '4bf58dd8d48988d164941735,'#square
                   '4bf58dd8d48988d159941735,'#trail
                   '4bf58dd8d48988d12d941735,'#monument
@@ -24,26 +23,101 @@ all_categories = ('4eb1d4d54b900d56c88a45fc,'#mountain
                   '4bf58dd8d48988d11b941735,'#pub
                   '4bf58dd8d48988d181941735')#museum
 
-params = dict(
-  client_id='ALCBWJD2IZ40YSYPYNMZAAKUXGOYCKSZQVRGHWXUXVC0GAFR',
-  client_secret='NYX4JFVQ4JO1FPR2G2SVQLJORNQOHJGIJ05MIRWPIVX3LN50',
-  v='20190529',
-  near='pocos de caldas',
-  categoryId= all_categories,
-  limit=900
-)
+def getVenuesID():
+    params = dict(
+      client_id = CLIENT_ID,
+      client_secret = CLIEND_SECRET,
+      v = VERSION,
+      near = NEAR,
+      categoryId= ALL_CATEGORIES,
+      limit = LIMIT
+    )
 
-resp = requests.get(url=url, params=params).json()
-venues = resp['response']['groups'][0]['items']
+    resp = requests.get(url=VENUE_EXPLORE, params=params).json()
+    venues = resp['response']['groups'][0]['items']
+    i = 0
+    for venue in venues:
+      venuesId.append(venue['venue']['id'])
+      matrix[0].append(venue['venue']['id'])
+      i = i+1
+    return
 
-for venue in venues:
-  print(venue['venue']['id'] +": "+venue['venue']['name'])
-#data = json.loads(resp.text)
+def getVenuesLikes(venueId,col):
+    VENUE_DETAILS = 'https://api.foursquare.com/v2/venues/'+venueId+'/likes'
+    params = dict(
+      client_id = CLIENT_ID,
+      client_secret = CLIEND_SECRET,
+      v = VERSION,
+    )
 
-#data = data['response']['groups']
+    resp = requests.get(url=VENUE_DETAILS, params=params).json()
 
-# ,Place1,Place2 ,Place3
-# User1,5,3,1
-# User2,4,5,?
-# User3,4,2,2
-# User4,1,?,4
+    users = resp['response']['likes']['items']
+    
+    for user in users:
+        for i in range(0,len(matrix)):
+            if(matrix[i][0] == user['id']):
+                matrix[i][col] = '1'
+                continue
+    
+    row = []    
+    for user in users:
+        row.append(user['id'])
+        for i in range(1, len(matrix[0])):
+            if(i == col):
+                row.append('1')
+            else:
+                row.append('?')
+        matrix.append(row)
+        row = []
+    return
+
+def getVenuesDislikes(venueId,col):
+    VENUE_DETAILS = 'https://api.foursquare.com/v2/venues/'+venueId+'/dislike'
+    params = dict(
+      client_id = CLIENT_ID,
+      client_secret = CLIEND_SECRET,
+      v = VERSION,
+    )
+
+    resp = requests.get(url=VENUE_DETAILS, params=params).json()
+
+    users = resp['response']
+    
+    for user in users:
+        for i in range(0,len(matrix)):
+            if(matrix[i][0] == user['id']):
+                matrix[i][col] = '0'
+                continue
+    
+    row = []    
+    for user in users:
+        row.append(user['id'])
+        for i in range(1, len(matrix[0])):
+            if(i == col):
+                row.append('0')
+            else:
+                row.append('?')
+        matrix.append(row)
+        row = []
+    return
+
+def writeCSV():
+    with open('dataset.csv','w') as f:
+        thewriter = csv.writer(f)
+        venues = ['IGNORE']
+        for venueId in venuesId:
+            venues.append(venueId)
+
+        thewriter.writerow(matrix[0])
+        for i in range(1,len(matrix)):
+            thewriter.writerow(matrix[i])
+    return
+
+getVenuesID()
+for i in range(0, len(venuesId)):
+    getVenuesLikes(venuesId[i],i)
+
+for i in range(0, len(venuesId)):
+    getVenuesDislikes(venuesId[i],i)
+writeCSV()
