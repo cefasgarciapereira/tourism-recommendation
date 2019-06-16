@@ -5,10 +5,9 @@ import csv
 VENUE_EXPLORE = 'https://api.foursquare.com/v2/venues/explore/'
 CLIENT_ID = 'ALCBWJD2IZ40YSYPYNMZAAKUXGOYCKSZQVRGHWXUXVC0GAFR'
 CLIEND_SECRET = 'NYX4JFVQ4JO1FPR2G2SVQLJORNQOHJGIJ05MIRWPIVX3LN50'
-#?client_id=ALCBWJD2IZ40YSYPYNMZAAKUXGOYCKSZQVRGHWXUXVC0GAFR&client_secret=NYX4JFVQ4JO1FPR2G2SVQLJORNQOHJGIJ05MIRWPIVX3LN50&v=20180323
 VERSION = '20180323'
 NEAR = 'pocos de caldas'
-LIMIT = 900
+LIMIT = 1000000
 venuesId = []
 usersId = []
 users_line = []
@@ -24,6 +23,7 @@ ALL_CATEGORIES = ('4eb1d4d54b900d56c88a45fc,'#mountain
                   '4bf58dd8d48988d181941735')#museum
 
 def getVenuesID():
+    print('Getting venues ids')
     params = dict(
       client_id = CLIENT_ID,
       client_secret = CLIEND_SECRET,
@@ -48,61 +48,34 @@ def getVenuesLikes(venueId,col):
       client_id = CLIENT_ID,
       client_secret = CLIEND_SECRET,
       v = VERSION,
+      limit= LIMIT
     )
 
     resp = requests.get(url=VENUE_DETAILS, params=params).json()
 
+    print(resp['response']['likes']['items'])
     users = resp['response']['likes']['items']
-    
+
     for user in users:
         for i in range(0,len(matrix)):
             if(matrix[i][0] == user['id']):
                 matrix[i][col] = '1'
                 continue
-    
-    row = []    
+
+    row = []
     for user in users:
         row.append(user['id'])
         for i in range(1, len(matrix[0])):
             if(i == col):
                 row.append('1')
             else:
-                row.append('?')
-        matrix.append(row)
-        row = []
-    return
-
-def getVenuesDislikes(venueId,col):
-    VENUE_DETAILS = 'https://api.foursquare.com/v2/venues/'+venueId+'/dislike'
-    params = dict(
-      client_id = CLIENT_ID,
-      client_secret = CLIEND_SECRET,
-      v = VERSION,
-    )
-
-    resp = requests.get(url=VENUE_DETAILS, params=params).json()
-
-    users = resp['response']
-    
-    for user in users:
-        for i in range(0,len(matrix)):
-            if(matrix[i][0] == user['id']):
-                matrix[i][col] = '0'
-                continue
-    
-    row = []    
-    for user in users:
-        row.append(user['id'])
-        for i in range(1, len(matrix[0])):
-            if(i == col):
-                row.append('0')
-            else:
-                row.append('?')
+                row.append('')
         matrix.append(row)
         row = []
     return
 
 def writeCSV():
+    print('Writing csv')
     with open('dataset.csv','w') as f:
         thewriter = csv.writer(f)
         venues = ['IGNORE']
@@ -115,9 +88,11 @@ def writeCSV():
     return
 
 getVenuesID()
-for i in range(0, len(venuesId)):
-    getVenuesLikes(venuesId[i],i)
 
-for i in range(0, len(venuesId)):
-    getVenuesDislikes(venuesId[i],i)
-writeCSV()
+print('Getting venues likes')
+getVenuesLikes('4c518ecb3940be9ac8600c09',0)
+# for i in range(0, len(venuesId)):
+#     getVenuesLikes(venuesId[i],i)
+
+#writeCSV()
+print('Done!')
