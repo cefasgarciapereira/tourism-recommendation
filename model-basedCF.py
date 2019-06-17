@@ -13,7 +13,7 @@ def readCSV():
                 row.pop(0)
                 matrix_str.append(row)
 
-def prob1(user_index,item_index):
+def firstProb(user_index,item_index,value):
     p1 = 0
     total_rates = 0
     frequency = 0
@@ -21,25 +21,13 @@ def prob1(user_index,item_index):
         if(matrix_str[row][item_index] != '?'): #if there is any rate, count it
             total_rates += 1
             
-        if(matrix_str[row][item_index] == '1'): #count the number of 1
+        if(matrix_str[row][item_index] == value): #count the number of 1
             p1 += 1
-    return float(p1)/float(total_rates)
-
-def prob0(user_index,item_index):
-    p0 = 0
-    total_rates = 0
-    frequency = 0
-    for row in range(0, len(matrix_str)):
-        if(matrix_str[row][item_index] != '?'): #if there is any rate, count it
-            total_rates += 1
-            
-        if(matrix_str[row][item_index] == '0'): #count the number of 1
-            p0 += 1
-    return float(p0)/float(total_rates)    
+    return float(p1)/float(total_rates)                 
 
 def pGiven1(user_index,item_index):
     indexes1 = []
-    prob = prob1(user_index,item_index)
+    prob = firstProb(user_index,item_index, '1')
     one_frequency = 0
     total_rates = 0
 
@@ -48,21 +36,23 @@ def pGiven1(user_index,item_index):
             indexes1.append(row)
     
     for col in range(0, len(matrix_str[0])):
-        if(col != item_index):
+        if(col != item_index and matrix_str[user_index][col] != '?'):
             for row in indexes1:
-                total_rates += 1
-                if(matrix_str[row][col] == '1'):
+                if(matrix_str[row][col] == '?'):
                     one_frequency += 1
-            prob = prob * float((float(one_frequency) / float(total_rates)))
+                if(matrix_str[row][col] == matrix_str[user_index][col]):
+                    one_frequency += 1
+            prob = prob * float((float(one_frequency) / float(len(indexes1))))
+            one_frequency = 0
     return  prob
 
 def pGiven0(user_index,item_index):
     indexes0 = []
-    prob = prob0(user_index,item_index)
+    prob = firstProb(user_index,item_index, '0')
     zero_frequency = 0
     total_rates = 0
 
-    for row in range (0, len(matrix_str)): #get all the positions with value 1 for a given item
+    for row in range (0, len(matrix_str)): # get all the positions with value 0 for a given item
         if(matrix_str[row][item_index] == '0'):
             indexes0.append(row)
     
@@ -76,15 +66,13 @@ def pGiven0(user_index,item_index):
     return  prob
 
 def recommend(user_index,item_index):
-    print('Recommending...')
     if(pGiven1(user_index, item_index) > pGiven0(user_index,item_index)):
         return 1
     else:
         return 0
 
 readCSV()
-
 for row in range(0,len(matrix_str)):
     for col in range(0,len(matrix_str[0])):
         if(matrix_str[row][col] == '?'):
-            print(pGiven1(row,col))
+            print(row,col,recommend(row,col))
