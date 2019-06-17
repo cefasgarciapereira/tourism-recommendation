@@ -53,7 +53,6 @@ def getVenuesLikes(venueId,col):
 
     resp = requests.get(url=VENUE_DETAILS, params=params).json()
 
-    print(resp['response']['likes']['items'])
     users = resp['response']['likes']['items']
 
     for user in users:
@@ -69,7 +68,7 @@ def getVenuesLikes(venueId,col):
             if(i == col):
                 row.append('1')
             else:
-                row.append('')
+                row.append('0')
         matrix.append(row)
         row = []
     return
@@ -90,9 +89,9 @@ def writeCSV():
 getVenuesID()
 
 print('Getting venues likes')
-getVenuesLikes('4c518ecb3940be9ac8600c09',0)
-# for i in range(0, len(venuesId)):
-#     getVenuesLikes(venuesId[i],i)
+#getVenuesLikes('4c518ecb3940be9ac8600c09',0)
+for i in range(0, len(venuesId)):
+    getVenuesLikes(venuesId[i],i)
 
 #writeCSV()
 print('Done!')
