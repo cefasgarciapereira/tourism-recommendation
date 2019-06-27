@@ -1,9 +1,13 @@
 import csv
+import numpy as np
+import math
+import random
 
 matrix_str = []
+matrix_str2 = []
 
 def readCSV():
-    with open('dataset-backup.csv') as csv_file:
+    with open('dataset.csv') as csv_file:
         print('Reading dataset')
         csv_reader = csv.reader(csv_file)
         row_counter = 0
@@ -71,8 +75,45 @@ def recommend(user_index,item_index):
     else:
         return 0
 
+def accuracy():
+    print('Accuracy')
+    y_true = []
+    y_score = []
+
+    for row in range(0, len(matrix_str)):
+        for col in range(0,len(matrix_str[0])):
+            y_true.append(int(matrix_str[row][col]))
+            y_score.append(int(recommend(row,col)))
+    print("MAE: %f" % MAE(y_true,y_score))
+    print("MSE: %f" % MSE(y_true,y_score))
+    print("RMSE: %f" % RMSE(y_true,y_score))
+    return
+
+def MAE(y_true, y_score):
+    sum = 0
+    for i in range(0, len(y_true)):
+        sum += abs((y_true[i] - y_score[i]))
+    return float(sum) / len(y_true)
+
+def MSE(y_true, y_score):
+    sum = 0
+    for i in range(0, len(y_true)):
+        sum += np.power((y_true[i] - y_score[i]),2)
+    return  float(sum) / len(y_true)
+
+def RMSE(y_true, y_score):
+    sum = 0
+    for i in range(0, len(y_true)):
+        sum += np.power((y_true[i] - y_score[i]),2)
+    return math.sqrt(float(sum) / len(y_true))
+
 readCSV()
-for row in range(0,len(matrix_str)):
-    for col in range(0,len(matrix_str[0])):
-        if(matrix_str[row][col] == '?'):
-            print(row,col,recommend(row,col))
+# for row in range(0,len(matrix_str)):
+#     for col in range(0,len(matrix_str[0])):
+#         if(matrix_str[row][col] == '?'):
+#             print(row,col,recommend(row,col))
+accuracy()
+
+# MAE: 0.060075
+# MSE: 0.060075
+# RMSE: 0.245102
